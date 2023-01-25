@@ -1,0 +1,316 @@
+openapi: 3.0.2
+info:
+  title: Rest API для сайта ФСТР pereval.online
+  version: '1.0'
+  description: Реализованы методы для добавления, просмотра и изменения отчётов о пересечении горных объектов.
+tags:
+  - name: Отчеты
+    description: Операции с отчетами
+paths:
+  /submitData:
+    post:
+      tags:
+      - Отчеты
+      operationId: create_MPass
+      summary: Создать отчет
+      description: Создать новый отчет о пересечении горного объекта
+      requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MPass'
+          required: true
+      responses:
+        '200':
+          description: Объект создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreationResponse'
+        '400':
+          description: Ошибка в составе переданных полей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreationResponse'
+        '500':
+          description: Ошибка при обработке на сервере
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreationResponse'
+  /submitData/:
+    get:
+      tags:
+      - Отчеты
+      operationId: filter_list_MPass
+      summary: Получить отчеты
+      description: Получить отчеты, созданные пользователем с указанным email
+      parameters:
+        - name: user_email
+          in: query
+          required: true
+          description: email автора отчета
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ответ получен
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MPass'
+        '500':
+          description: Ошибка при обработке на сервере
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShortResponse'
+  /submitData/{id}:
+    get:
+      tags:
+      - Отчеты
+      operationId: retrieve_MPass
+      summary: Получить отчет
+      description: Получить отчет о пересечении горного объекта по id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Уникальный идентификатор отчета
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Объект получен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MPass'
+        '404':
+          description: Объект не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShortResponse'
+        '500':
+          description: Ошибка при обработке на сервере
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShortResponse'
+    patch:
+      tags:
+      - Отчеты
+      operationId: partial_update_MPass
+      summary: Изменить отчет
+      description: Изменить поля отчета о пересечении горного объекта по id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Уникальный идентификатор отчета
+          schema:
+            type: string
+      requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MPass'
+          required: true
+      responses:
+        '200':
+          description: Объект изменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchSuccessResponse'
+        '403':
+          description: Отчет в статусе, запрещающем изменение
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchFailResponse'
+        '404':
+          description: Объект не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchFailResponse'
+        '500':
+          description: Ошибка при обработке на сервере
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatchFailResponse'
+components:
+  schemas:
+    CreationResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Код HTTP, полученный в результате обработки
+        message:
+          type: string
+          description: Строка описания статуса
+        id:
+          type: integer
+          nullable: true
+          description: Идентификатор созданного объекта или null
+    ShortResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Код HTTP, полученный в результате обработки
+        message:
+          type: string
+          description: Строка описания статуса
+    PatchSuccessResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Код HTTP, полученный в результате обработки
+        state:
+          type: integer
+          const: 1
+          description: Код состояния (1)
+        message:
+          type: string
+          description: Строка описания статуса
+    PatchFailResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: Код HTTP, полученный в результате обработки
+        state:
+          type: integer
+          const: 0
+          description: Код состояния (0)
+        message:
+          type: string
+          description: Строка описания статуса
+    MPass:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор отчета в базе данных
+          readOnly: true
+        status:
+          type: string
+          description: Статус отчета
+          enum:
+            - new
+            - pending
+            - accepted
+            - rejected
+          readOnly: true
+        beauty_title:
+          type: string
+          maxLength: 30
+          description: Тип горного объекта, например "пер." или "г."
+        title:
+          type: string
+          maxLength: 255
+          description: Наименование горного объекта
+        other_titles:
+          type: string
+          maxLength: 255
+          description: Другие известные наименования горного объекта
+        connect:
+          type: string
+          maxLength: 255
+          description: Что соединяет горный объект (перевал)
+        add_time:
+          type: string
+          format: date-time
+          description: Дата и время добавления отчета
+        level:
+          type: object
+          properties:
+            winter:
+              type: string
+              maxLength: 2
+              description: Категория сложности зимой
+            spring:
+              type: string
+              maxLength: 2
+              description: Категория сложности весной
+            summer:
+              type: string
+              maxLength: 2
+              description: Категория сложности летом
+            autumn:
+              type: string
+              maxLength: 2
+              description: Категория сложности осенью
+        coords:
+          type: object
+          properties:
+            latitude:
+              type: number
+              format: float
+              description: Широта горного объекта
+            longitude:
+              type: number
+              format: float
+              description: Долгота горного объекта
+            height:
+              type: integer
+              description: Высота горного объекта над уровнем моря
+          required:
+            - latitude
+            - longitude
+            - height
+        user:
+          type: object
+          properties:
+            name:
+              type: string
+              maxLength: 255
+              description: Имя
+            fam:
+              type: string
+              maxLength: 255
+              description: Фамилия
+            otc:
+              type: string
+              maxLength: 255
+              description: Отчество
+            email:
+              type: string
+              format: email
+              maxLength: 255
+              description: Адрес e-mail
+            phone:
+              type: string
+              maxLength: 20
+              description: Телефон
+          required:
+            - email
+        images:
+          type: array
+          description: Вложенные изображения
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+                maxLength: 255
+                description: Описание изображения
+              data:
+                type: string
+                format: binary
+                description: Двоичные данные BASE64
+      required:
+      - beauty_title
+      - title
+      - add_time
+      - coords
+      - user
